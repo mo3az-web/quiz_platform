@@ -1,18 +1,14 @@
 import { useState } from "react";
-
-interface RegisterForm {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
+import { NavLink } from "react-router-dom";
+import type { RegisterForm } from "../types/types.ts";
+import axios from "axios";
+import { registerUser } from "../Api/auth.ts";
 export default function Register() {
   const [form, setForm] = useState<RegisterForm>({
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    password_confirmation: "",
   });
 
   const [error, setError] = useState<string>("");
@@ -24,20 +20,33 @@ export default function Register() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
+  if (form.password !== form.password_confirmation) {
+    setError("Passwords do not match");
+    return;
+  }
 
+  try {
     setError("");
 
-    console.log("Register Data:", form);
+    const res = await registerUser(form);
 
-    // هنا تربط API
-  };
+    console.log("User Registered:", res.data);
+
+    // 🔥 مثلا تروح لصفحة login
+    // navigate("/login");
+
+  } catch (err: any) {
+    if (err.response?.data?.errors) {
+      const errors = err.response.data.errors;
+      setError(Object.values(errors).flat().join(", "));
+    } else {
+      setError("Something went wrong");
+    }
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -104,8 +113,8 @@ export default function Register() {
             </label>
             <input
               type="password"
-              name="confirmPassword"
-              value={form.confirmPassword}
+              name="password_confirmation"
+              value={form.password_confirmation}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -130,10 +139,10 @@ export default function Register() {
         </form>
 
         <p className="text-center text-sm mt-4">
-          Already have an account?{" "}
-          <span className="text-blue-600 cursor-pointer">
+          Already have an account?{""}
+          <NavLink to={"login"} className="text-blue-600 cursor-pointer">
             Login
-          </span>
+          </NavLink>
         </p>
       </div>
     </div>

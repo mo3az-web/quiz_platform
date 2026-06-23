@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { Navigate, NavLink } from "react-router-dom";
+import axios from "axios";
+import api from "../Api/api";
 
-interface LoginForm {
-  email: string;
-  password: string;
-}
+import type { LoginForm } from "../types/types";
+
+
+
 
 export default function Login() {
   const [form, setForm] = useState<LoginForm>({
@@ -11,6 +14,7 @@ export default function Login() {
     password: "",
   });
 
+ 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
@@ -78,9 +82,9 @@ export default function Login() {
 
         <p className="text-center text-sm mt-4">
           Don't have an account?{" "}
-          <span className="text-blue-600 cursor-pointer">
+          <NavLink  to={'/register'} className="text-blue-600 cursor-pointer">
             Sign up
-          </span>
+          </NavLink>
         </p>
       </div>
     </div>
