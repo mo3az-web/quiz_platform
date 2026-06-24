@@ -35,8 +35,7 @@ export default function Register() {
 
     console.log("User Registered:", res.data);
 
-    // 🔥 مثلا تروح لصفحة login
-    // navigate("/login");
+
 
   } catch (err: any) {
     if (err.response?.data?.errors) {
