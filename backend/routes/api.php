@@ -1,5 +1,5 @@
 <?php
-<?php
+
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -26,15 +26,15 @@ Route::middleware('auth:sanctum')->group(function () {
     | Admin Routes (إدارة الكويز)
     |--------------------------------------------------------------------------
     */
-    Route::prefix('admin')->group(function () {
+ Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
 
-        Route::get('/quizzes', [quizController::class, 'index']);
-        Route::post('/quizzes', [quizController::class, 'store']);
-        Route::get('/quizzes/{id}', [quizController::class, 'show']);
-        Route::put('/quizzes/{id}', [quizController::class, 'update']);
-        Route::delete('/quizzes/{id}', [quizController::class, 'destroy']);
+    Route::get('/quizzes', [quizController::class, 'index']);
+    Route::post('/quizzes', [quizController::class, 'store']);
+    Route::get('/quizzes/{id}', [quizController::class, 'show']);
+    Route::put('/quizzes/{id}', [quizController::class, 'update']);
+    Route::delete('/quizzes/{id}', [quizController::class, 'destroy']);
 
-    });
+});
 
 
     /*

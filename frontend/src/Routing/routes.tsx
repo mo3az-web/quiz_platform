@@ -4,6 +4,7 @@ import Register from "../auth/register";
 import RoleRoute from "./roleRoute";
 import AdminDashboard from "../admin/AdminDashboard";
 import UserDashboard from "../user/studentDashboard";
+import AddExam from "../admin/addExam";
 
 // check auth
 
@@ -49,6 +50,14 @@ export default function AppRoutes() {
           element={
             <RoleRoute allowedRoles={["admin"]}>
               <AdminDashboard />
+            </RoleRoute>
+          }
+        />
+         <Route
+        path="/admin/addexam"
+          element={
+            <RoleRoute allowedRoles={["admin"]}>
+              <AddExam />
             </RoleRoute>
           }
         />

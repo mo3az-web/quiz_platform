@@ -30,13 +30,15 @@ const handleSubmit = async (e: React.FormEvent) => {
     const res = await loginUser(form);
     const data = res.data;
     const user = data.user ?? data.data?.user;
-    const token = data.token ?? data.access_token ?? data.data?.token;
+    const token = data.access_token ?? data.token ?? data.data?.token;
     const role = data.role ?? user?.role ?? "user";
 
     console.log("User Logged In:", data);
 
-    if (token) {
+    if (typeof token === "string" && token.length > 0) {
       localStorage.setItem("token", token);
+    } else {
+      throw new Error("Invalid token received from server");
     }
 
     localStorage.setItem("role", role);

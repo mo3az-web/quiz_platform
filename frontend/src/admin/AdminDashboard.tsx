@@ -1,3 +1,6 @@
+import { NavLink } from "react-router-dom";
+
+
 export default function AdminDashboard() {
   const adminName = localStorage.getItem("username") || "Admin";
 
@@ -9,10 +12,17 @@ export default function AdminDashboard() {
           Admin Panel 🔥 {adminName}
         </h1>
 
+      
+<NavLink 
+  to="/admin/addexam"
+  className="inline-block mt-4 bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+>
+  Add Exam
+</NavLink>
         <p className="mt-2 text-gray-300">
           Manage users, courses, and system settings.
         </p>
-
+          
         <div className="mt-6 grid gap-4">
 
           <div className="p-4 bg-gray-700 rounded-lg">
