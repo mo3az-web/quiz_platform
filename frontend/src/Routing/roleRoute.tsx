@@ -9,7 +9,7 @@ const RoleRoute = ({ children, allowedRoles }: Props) => {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
   const location = useLocation();
-
+ 
   // مش مسجل دخول
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;

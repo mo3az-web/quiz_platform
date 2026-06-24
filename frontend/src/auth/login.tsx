@@ -1,34 +1,62 @@
 import { useState } from "react";
-import { Navigate, NavLink } from "react-router-dom";
-import axios from "axios";
-import api from "../Api/api";
-
+import { NavLink, useNavigate } from "react-router-dom";
+import { loginUser } from "../Api/auth";
 import type { LoginForm } from "../types/types";
 
 
 
 
 export default function Login() {
+  const navigate = useNavigate();
+  const [error, setError] = useState<string>("");
   const [form, setForm] = useState<LoginForm>({
     email: "",
     password: "",
   });
 
  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setForm({
+    ...form,
+    [e.target.name]: e.target.value,
+  });
+};
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Login Data:", form);
 
-    // هنا تقدر تربط API
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
+  try {
+    const res = await loginUser(form);
+    const data = res.data;
+    const user = data.user ?? data.data?.user;
+    const token = data.token ?? data.access_token ?? data.data?.token;
+    const role = data.role ?? user?.role ?? "user";
+
+    console.log("User Logged In:", data);
+
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
+    localStorage.setItem("role", role);
+
+    if (user?.name) {
+      localStorage.setItem("username", user.name);
+    }
+
+    navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
+
+  } catch (err: any) {
+    if (err.response?.data?.errors) { 
+      
+      const errors = err.response.data.errors;
+      setError(Object.values(errors).flat().join(", "));
+    } else {
+      setError("Something went wrong");
+    }
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
