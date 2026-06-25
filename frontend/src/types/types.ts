@@ -31,3 +31,18 @@ export interface LoginForm {
   duration: string;
   is_active: boolean;
 };
+
+
+export type Quiz = {
+  id: number;
+  title: string;
+  description: string | null;
+  duration: number | null;
+  is_active: boolean;
+  questions: Array<{
+    id: number;
+    question: string;
+    points: number;
+    choices: ChoiceForm[];
+  }>;
+};

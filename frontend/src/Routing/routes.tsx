@@ -5,6 +5,7 @@ import RoleRoute from "./roleRoute";
 import AdminDashboard from "../admin/AdminDashboard";
 import UserDashboard from "../user/studentDashboard";
 import AddExam from "../admin/addExam";
+import ViewExams from "../admin/viewExams";
 
 // check auth
 
@@ -58,6 +59,14 @@ export default function AppRoutes() {
           element={
             <RoleRoute allowedRoles={["admin"]}>
               <AddExam />
+            </RoleRoute>
+          }
+        />
+         <Route
+        path="/admin/viewexams"
+          element={
+            <RoleRoute allowedRoles={["admin"]}>
+              <ViewExams />
             </RoleRoute>
           }
         />

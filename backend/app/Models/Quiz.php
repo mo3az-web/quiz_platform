@@ -32,4 +32,9 @@ class Quiz extends Model
     {
         return $this->hasMany(Question::class);
     }
+
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
 }

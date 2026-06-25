@@ -183,10 +183,10 @@ class quizController extends Controller
 
     private function rules(bool $creating = true): array
     {
-        $required = $creating ? "required" : "sometimes|required";
+        $required = $creating ? ["required"] : ["sometimes", "required"];
 
         return [
-            "title" => [$required, "string", "max:255"],
+            "title" => [...$required, "string", "max:255"],
             "description" => ["nullable", "string"],
             "duration" => ["nullable", "integer", "min:1"],
             "is_active" => ["sometimes", "boolean"],
