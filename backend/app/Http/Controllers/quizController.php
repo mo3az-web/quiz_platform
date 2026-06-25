@@ -199,4 +199,197 @@ class quizController extends Controller
             "questions.*.choices.*.is_correct" => ["sometimes", "boolean"],
         ];
     }
+
+    // =====================================================================
+    // Student-facing endpoints
+    // =====================================================================
+
+    public function studentIndex()
+    {
+        $quizzes = Quiz::where("is_active", true)
+            ->select("id", "title", "description", "duration")
+            ->latest()
+            ->get();
+
+        return response()->json([
+            "data" => $quizzes,
+        ]);
+    }
+
+    public function studentShow(string $id)
+    {
+        $quiz = Quiz::with("questions.choices")
+            ->where("is_active", true)
+            ->find($id);
+
+        if (! $quiz) {
+            return response()->json([
+                "message" => "Quiz not found",
+            ], 404);
+        }
+
+        // FIX: لا يجب إرسال "is_correct" للطالب أبدًا قبل التسليم،
+        // وإلا أصبحت الإجابة الصحيحة موجودة داخل استجابة الـ API نفسها.
+        $quiz->questions->each(function ($question) {
+            $question->choices->each(function ($choice) {
+                $choice->makeHidden("is_correct");
+            });
+        });
+
+        return response()->json([
+            "quiz" => $quiz,
+        ]);
+    }
+
+    public function startQuiz(string $id)
+    {
+        if (! auth()->check()) {
+            return response()->json([
+                "message" => "Unauthenticated",
+            ], 401);
+        }
+
+        $quiz = Quiz::find($id);
+
+        if (! $quiz || ! $quiz->is_active) {
+            return response()->json([
+                "message" => "Quiz not available",
+            ], 404);
+        }
+
+        $existingAttempt = DB::table('quiz_attempts')
+            ->where("user_id", auth()->id())
+            ->where("quiz_id", $quiz->id)
+            ->first();
+
+        if ($existingAttempt) {
+            // FIX: لو المحاولة منتهية، لا تسمح بالبدء من جديد كأنها محاولة جارية.
+            if ($existingAttempt->status === "completed") {
+                return response()->json([
+                    "message" => "You already submitted this quiz",
+                    "attempt_id" => $existingAttempt->id,
+                    "status" => "completed",
+                    "score" => $existingAttempt->score,
+                    "total_points" => $existingAttempt->total_points,
+                ], 409);
+            }
+
+            // FIX: نرجع started_at و duration برضه هنا، عشان لو الطالب عمل
+            // refresh للصفحة يقدر الفرونت يحسب الوقت المتبقي الصحيح
+            // بدل ما يرجّع المؤقّت للمدة الكاملة من جديد.
+            return response()->json([
+                "message" => "You already started this quiz",
+                "attempt_id" => $existingAttempt->id,
+                "started_at" => $existingAttempt->started_at,
+                "duration" => $quiz->duration,
+                "status" => $existingAttempt->status,
+            ]);
+        }
+
+        $startedAt = now();
+
+        $attemptId = DB::table('quiz_attempts')->insertGetId([
+            "user_id" => auth()->id(),
+            "quiz_id" => $quiz->id,
+            "answers" => json_encode([]),
+            "score" => 0,
+            "total_points" => 0,
+            "status" => "in_progress",
+            "started_at" => $startedAt,
+            "created_at" => $startedAt,
+            "updated_at" => $startedAt,
+        ]);
+
+        return response()->json([
+            "message" => "Quiz started",
+            "attempt_id" => $attemptId,
+            "started_at" => $startedAt,
+            "duration" => $quiz->duration,
+            "status" => "in_progress",
+        ]);
+    }
+
+    public function submitQuiz(Request $request, string $id)
+    {
+        if (! auth()->check()) {
+            return response()->json([
+                "message" => "Unauthenticated",
+            ], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            "attempt_id" => ["required", "integer"],
+            "answers" => ["required", "array"],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                "message" => "Validation error",
+                "errors" => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $validator->validated();
+
+        // FIX: تحقّق إن المحاولة تخص نفس الكويز الموجود في الرابط، مش بس نفس المستخدم.
+        $attempt = DB::table('quiz_attempts')
+            ->where("id", $data["attempt_id"])
+            ->where("user_id", auth()->id())
+            ->where("quiz_id", $id)
+            ->first();
+
+        if (! $attempt) {
+            return response()->json([
+                "message" => "Attempt not found",
+            ], 404);
+        }
+
+        // FIX: منع التسليم المتكرر (كان ممكن يبعت submit أكتر من مرة ويغيّر نتيجته).
+        if ($attempt->status === "completed") {
+            return response()->json([
+                "message" => "Quiz already submitted",
+                "score" => $attempt->score,
+                "total_points" => $attempt->total_points,
+            ], 409);
+        }
+
+        $quiz = Quiz::with("questions.choices")->find($id);
+
+        // FIX: كان ممكن يحصل خطأ Undefined property لو $quiz = null.
+        if (! $quiz) {
+            return response()->json([
+                "message" => "Quiz not found",
+            ], 404);
+        }
+
+        $score = 0;
+        $totalPoints = 0;
+
+        foreach ($quiz->questions as $question) {
+            $totalPoints += $question->points;
+
+            $correctChoice = $question->choices->firstWhere("is_correct", true);
+            $userAnswer = $data["answers"][$question->id] ?? null;
+
+            if ($correctChoice && $userAnswer == $correctChoice->id) {
+                $score += $question->points;
+            }
+        }
+
+        DB::table('quiz_attempts')
+            ->where("id", $attempt->id)
+            ->update([
+                "answers" => json_encode($data["answers"]),
+                "score" => $score,
+                "total_points" => $totalPoints,
+                "status" => "completed",
+                "updated_at" => now(),
+            ]);
+
+        return response()->json([
+            "message" => "Quiz submitted successfully",
+            "score" => $score,
+            "total_points" => $totalPoints,
+        ]);
+    }
 }

@@ -6,7 +6,8 @@ import AdminDashboard from "../admin/AdminDashboard";
 import UserDashboard from "../user/studentDashboard";
 import AddExam from "../admin/addExam";
 import ViewExams from "../admin/viewExams";
-
+import ShowExams from "../user/showExams";
+import ExamPage from "../user/exam";
 // check auth
 
 export default function AppRoutes() {
@@ -41,6 +42,22 @@ export default function AppRoutes() {
           element={
             <RoleRoute allowedRoles={["user"]}>
               <UserDashboard />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="/exams"
+          element={
+            <RoleRoute allowedRoles={["user"]}>
+              <ShowExams />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="/exam/:examId"
+          element={
+            <RoleRoute allowedRoles={["user"]}>
+              <ExamPage />
             </RoleRoute>
           }
         />
