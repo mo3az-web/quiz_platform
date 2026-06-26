@@ -163,15 +163,19 @@ class quizController extends Controller
             ->find($id);
     }
 
-    private function saveQuestions(Quiz $quiz, array $questions): void
-    {
-        foreach ($questions as $questionData) {
-            $question = $quiz->questions()->create([
-                "question" => $questionData["question"],
-                "type" => $questionData["type"] ?? "multiple_choice",
-                "points" => $questionData["points"] ?? 1,
-            ]);
+private function saveQuestions(Quiz $quiz, array $questions): void
+{
+    foreach ($questions as $questionData) {
+        $type = $questionData["type"] ?? "mcq";
 
+        $question = $quiz->questions()->create([
+            "question" => $questionData["question"],
+            "type" => $type,
+            "points" => $questionData["points"] ?? 1,
+        ]);
+
+        // 🔥 choices بس لو MCQ
+        if ($type === "mcq") {
             foreach ($questionData["choices"] ?? [] as $choiceData) {
                 $question->choices()->create([
                     "choice" => $choiceData["choice"],
@@ -180,25 +184,41 @@ class quizController extends Controller
             }
         }
     }
+}
 
-    private function rules(bool $creating = true): array
-    {
-        $required = $creating ? ["required"] : ["sometimes", "required"];
+  private function rules(bool $creating = true): array
+{
+    $required = $creating ? ["required"] : ["sometimes", "required"];
 
-        return [
-            "title" => [...$required, "string", "max:255"],
-            "description" => ["nullable", "string"],
-            "duration" => ["nullable", "integer", "min:1"],
-            "is_active" => ["sometimes", "boolean"],
-            "questions" => ["sometimes", "array"],
-            "questions.*.question" => ["required_with:questions", "string"],
-            "questions.*.type" => ["nullable", "string", "max:50"],
-            "questions.*.points" => ["nullable", "integer", "min:1"],
-            "questions.*.choices" => ["sometimes", "array"],
-            "questions.*.choices.*.choice" => ["required_with:questions.*.choices", "string"],
-            "questions.*.choices.*.is_correct" => ["sometimes", "boolean"],
-        ];
-    }
+    return [
+        "title" => [...$required, "string", "max:255"],
+        "description" => ["nullable", "string"],
+        "duration" => ["nullable", "integer", "min:1"],
+        "is_active" => ["sometimes", "boolean"],
+
+        "questions" => ["sometimes", "array"],
+
+        "questions.*.question" => ["required_with:questions", "string"],
+
+        // 🔥 مهم
+        "questions.*.type" => ["required", "in:mcq,essay"],
+
+        "questions.*.points" => ["nullable", "integer", "min:1"],
+
+        // 🔥 choices required فقط في mcq
+        "questions.*.choices" => ["required_if:questions.*.type,mcq", "array"],
+
+        "questions.*.choices.*.choice" => [
+            "required_if:questions.*.type,mcq",
+            "string"
+        ],
+
+        "questions.*.choices.*.is_correct" => [
+            "required_if:questions.*.type,mcq",
+            "boolean"
+        ],
+    ];
+}
 
     // =====================================================================
     // Student-facing endpoints
@@ -309,87 +329,94 @@ class quizController extends Controller
         ]);
     }
 
-    public function submitQuiz(Request $request, string $id)
-    {
-        if (! auth()->check()) {
-            return response()->json([
-                "message" => "Unauthenticated",
-            ], 401);
-        }
+   public function submitQuiz(Request $request, string $id)
+{
+    if (! auth()->check()) {
+        return response()->json([
+            "message" => "Unauthenticated",
+        ], 401);
+    }
 
-        $validator = Validator::make($request->all(), [
-            "attempt_id" => ["required", "integer"],
-            "answers" => ["required", "array"],
-        ]);
+    $validator = Validator::make($request->all(), [
+        "attempt_id" => ["required", "integer"],
+        "answers" => ["required", "array"],
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                "message" => "Validation error",
-                "errors" => $validator->errors(),
-            ], 422);
-        }
+    if ($validator->fails()) {
+        return response()->json([
+            "message" => "Validation error",
+            "errors" => $validator->errors(),
+        ], 422);
+    }
 
-        $data = $validator->validated();
+    $data = $validator->validated();
 
-        // FIX: تحقّق إن المحاولة تخص نفس الكويز الموجود في الرابط، مش بس نفس المستخدم.
-        $attempt = DB::table('quiz_attempts')
-            ->where("id", $data["attempt_id"])
-            ->where("user_id", auth()->id())
-            ->where("quiz_id", $id)
-            ->first();
+    $attempt = DB::table('quiz_attempts')
+        ->where("id", $data["attempt_id"])
+        ->where("user_id", auth()->id())
+        ->where("quiz_id", $id)
+        ->first();
 
-        if (! $attempt) {
-            return response()->json([
-                "message" => "Attempt not found",
-            ], 404);
-        }
+    if (! $attempt) {
+        return response()->json([
+            "message" => "Attempt not found",
+        ], 404);
+    }
 
-        // FIX: منع التسليم المتكرر (كان ممكن يبعت submit أكتر من مرة ويغيّر نتيجته).
-        if ($attempt->status === "completed") {
-            return response()->json([
-                "message" => "Quiz already submitted",
-                "score" => $attempt->score,
-                "total_points" => $attempt->total_points,
-            ], 409);
-        }
+    if ($attempt->status === "completed") {
+        return response()->json([
+            "message" => "Quiz already submitted",
+            "score" => $attempt->score,
+            "total_points" => $attempt->total_points,
+        ], 409);
+    }
 
-        $quiz = Quiz::with("questions.choices")->find($id);
+    $quiz = Quiz::with("questions.choices")->find($id);
 
-        // FIX: كان ممكن يحصل خطأ Undefined property لو $quiz = null.
-        if (! $quiz) {
-            return response()->json([
-                "message" => "Quiz not found",
-            ], 404);
-        }
+    if (! $quiz) {
+        return response()->json([
+            "message" => "Quiz not found",
+        ], 404);
+    }
 
-        $score = 0;
-        $totalPoints = 0;
+    $score = 0;
+    $totalPoints = 0;
 
-        foreach ($quiz->questions as $question) {
-            $totalPoints += $question->points;
+    foreach ($quiz->questions as $question) {
+        $totalPoints += $question->points;
 
+        $userAnswer = $data["answers"][$question->id] ?? null;
+
+        // 🔥 MCQ
+        if ($question->type === "mcq") {
             $correctChoice = $question->choices->firstWhere("is_correct", true);
-            $userAnswer = $data["answers"][$question->id] ?? null;
 
             if ($correctChoice && $userAnswer == $correctChoice->id) {
                 $score += $question->points;
             }
         }
 
-        DB::table('quiz_attempts')
-            ->where("id", $attempt->id)
-            ->update([
-                "answers" => json_encode($data["answers"]),
-                "score" => $score,
-                "total_points" => $totalPoints,
-                "status" => "completed",
-                "updated_at" => now(),
-            ]);
+        // 🔥 Essay (حالياً بدون تصحيح)
+        else {
+            // ممكن تضيف AI هنا بعدين
+            // حالياً بنحسبها 0
+        }
+    }
 
-        return response()->json([
-            "message" => "Quiz submitted successfully",
+    DB::table('quiz_attempts')
+        ->where("id", $attempt->id)
+        ->update([
+            "answers" => json_encode($data["answers"]),
             "score" => $score,
             "total_points" => $totalPoints,
+            "status" => "completed",
+            "updated_at" => now(),
         ]);
-    }
+
+    return response()->json([
+        "message" => "Quiz submitted successfully",
+        "score" => $score,
+        "total_points" => $totalPoints,
+    ]);
+}
 }

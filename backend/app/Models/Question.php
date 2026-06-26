@@ -18,6 +18,16 @@ class Question extends Model
         "points",
     ];
 
+    const TYPE_MCQ = 'mcq';
+    const TYPE_ESSAY = 'essay';
+
+    protected $casts = [
+        'points' => 'integer',
+        'type' => 'string',
+    ];
+
+    // ================= Relations =================
+
     public function quiz(): BelongsTo
     {
         return $this->belongsTo(Quiz::class);
@@ -26,5 +36,17 @@ class Question extends Model
     public function choices(): HasMany
     {
         return $this->hasMany(Choice::class);
+    }
+
+    // ================= Helpers =================
+
+    public function isMCQ(): bool
+    {
+        return $this->type === self::TYPE_MCQ;
+    }
+
+    public function isEssay(): bool
+    {
+        return $this->type === self::TYPE_ESSAY;
     }
 }
