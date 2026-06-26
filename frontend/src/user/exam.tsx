@@ -1,26 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../Api/api';
 import { useParams } from 'react-router-dom';
+import  type  { Choice } from '../types/types';
+import type { Exam } from '../types/types';
+import type { Question } from '../types/types';
 
-interface Choice {
-  id: number;
-  text: string;
-}
 
-interface Question {
-  id: number;
-  text: string;
-  points: number;
-  choices: Choice[];
-}
 
-interface Exam {
-  id: number;
-  title: string;
-  description: string;
-  duration: number; // بالدقايق
-  questions: Question[];
-}
 
 type PageStatus = 'loading' | 'ready' | 'already_submitted' | 'error' | 'submitted';
 

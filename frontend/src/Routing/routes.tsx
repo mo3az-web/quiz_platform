@@ -8,6 +8,7 @@ import AddExam from "../admin/addExam";
 import ViewExams from "../admin/viewExams";
 import ShowExams from "../user/showExams";
 import ExamPage from "../user/exam";
+import AllResults from "../user/GetResult";
 // check auth
 
 export default function AppRoutes() {
@@ -58,6 +59,14 @@ export default function AppRoutes() {
           element={
             <RoleRoute allowedRoles={["user"]}>
               <ExamPage />
+            </RoleRoute>
+          }
+        />
+           <Route
+          path="/results"
+          element={
+            <RoleRoute allowedRoles={["user"]}>
+              <AllResults />
             </RoleRoute>
           }
         />

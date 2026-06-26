@@ -162,31 +162,25 @@ class quizController extends Controller
             ->where("user_id", auth()->id())
             ->find($id);
     }
-
 private function saveQuestions(Quiz $quiz, array $questions): void
 {
     foreach ($questions as $questionData) {
-        $type = $questionData["type"] ?? "mcq";
-
         $question = $quiz->questions()->create([
             "question" => $questionData["question"],
-            "type" => $type,
+            "type" => "mcq", // ثابت
             "points" => $questionData["points"] ?? 1,
         ]);
 
-        // 🔥 choices بس لو MCQ
-        if ($type === "mcq") {
-            foreach ($questionData["choices"] ?? [] as $choiceData) {
-                $question->choices()->create([
-                    "choice" => $choiceData["choice"],
-                    "is_correct" => $choiceData["is_correct"] ?? false,
-                ]);
-            }
+        foreach ($questionData["choices"] ?? [] as $choiceData) {
+            $question->choices()->create([
+                "choice" => $choiceData["choice"],
+                "is_correct" => $choiceData["is_correct"] ?? false,
+            ]);
         }
     }
 }
 
-  private function rules(bool $creating = true): array
+private function rules(bool $creating = true): array
 {
     $required = $creating ? ["required"] : ["sometimes", "required"];
 
@@ -199,24 +193,13 @@ private function saveQuestions(Quiz $quiz, array $questions): void
         "questions" => ["sometimes", "array"],
 
         "questions.*.question" => ["required_with:questions", "string"],
-
-        // 🔥 مهم
-        "questions.*.type" => ["required", "in:mcq,essay"],
-
         "questions.*.points" => ["nullable", "integer", "min:1"],
 
-        // 🔥 choices required فقط في mcq
-        "questions.*.choices" => ["required_if:questions.*.type,mcq", "array"],
+        // 🔥 كله MCQ
+        "questions.*.choices" => ["required", "array", "min:2"],
 
-        "questions.*.choices.*.choice" => [
-            "required_if:questions.*.type,mcq",
-            "string"
-        ],
-
-        "questions.*.choices.*.is_correct" => [
-            "required_if:questions.*.type,mcq",
-            "boolean"
-        ],
+        "questions.*.choices.*.choice" => ["required", "string"],
+        "questions.*.choices.*.is_correct" => ["required", "boolean"],
     ];
 }
 
@@ -382,27 +365,7 @@ private function saveQuestions(Quiz $quiz, array $questions): void
     $score = 0;
     $totalPoints = 0;
 
-    foreach ($quiz->questions as $question) {
-        $totalPoints += $question->points;
-
-        $userAnswer = $data["answers"][$question->id] ?? null;
-
-        // 🔥 MCQ
-        if ($question->type === "mcq") {
-            $correctChoice = $question->choices->firstWhere("is_correct", true);
-
-            if ($correctChoice && $userAnswer == $correctChoice->id) {
-                $score += $question->points;
-            }
-        }
-
-        // 🔥 Essay (حالياً بدون تصحيح)
-        else {
-            // ممكن تضيف AI هنا بعدين
-            // حالياً بنحسبها 0
-        }
-    }
-
+  
     DB::table('quiz_attempts')
         ->where("id", $attempt->id)
         ->update([
@@ -418,5 +381,35 @@ private function saveQuestions(Quiz $quiz, array $questions): void
         "score" => $score,
         "total_points" => $totalPoints,
     ]);
+}
+
+
+public function allResults()
+{
+    $user = auth()->user();
+
+    $attempts = \App\Models\QuizAttempt::with('quiz')
+        ->where('user_id', $user->id)
+        ->where('status', 'completed')
+        ->latest()
+        ->get();
+
+    $results = $attempts->map(function ($attempt) {
+        return [
+            'id' => $attempt->id,
+            'title' => $attempt->quiz->title,
+            'score' => $attempt->score,
+            'totalQuestions' => $attempt->total_points,
+            'percentage' => $attempt->total_points > 0
+                ? round(($attempt->score / $attempt->total_points) * 100)
+                : 0,
+            'date' => $attempt->completed_at,
+            'status' => ($attempt->total_points > 0 && ($attempt->score / $attempt->total_points) >= 0.5)
+                ? 'passed'
+                : 'failed',
+        ];
+    });
+
+    return response()->json($results);
 }
 }

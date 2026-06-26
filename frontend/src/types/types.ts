@@ -46,3 +46,25 @@ export type Quiz = {
     choices: ChoiceForm[];
   }>;
 };
+
+
+
+export interface Choice {
+  id: number;
+  text: string;
+}
+
+export interface Question {
+  id: number;
+  text: string;
+  points: number;
+  choices: Choice[];
+}
+
+export interface Exam {
+  id: number;
+  title: string;
+  description: string;
+  duration: number; // بالدقايق
+  questions: Question[];
+}

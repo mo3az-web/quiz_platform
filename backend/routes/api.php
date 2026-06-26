@@ -42,22 +42,19 @@ Route::middleware('auth:sanctum')->group(function () {
     | Student Routes (حل الكويز)
     |--------------------------------------------------------------------------
     */
-    Route::prefix('student')->group(function () {
+   Route::prefix('student')->group(function () {
 
-        // عرض كل الكويزات
-        Route::get('/quizzes', [quizController::class, 'studentIndex']);
+    Route::get('/quizzes', [quizController::class, 'studentIndex']);
 
-        // عرض كويز واحد بالأسئلة
-        Route::get('/quizzes/{id}', [quizController::class, 'studentShow']);
+    Route::get('/quizzes/{id}', [quizController::class, 'studentShow']);
 
-        // بدء المحاولة
-        Route::post('/quizzes/{id}/start', [quizController::class, 'startQuiz']);
+    Route::post('/quizzes/{id}/start', [quizController::class, 'startQuiz']);
 
-        // تسليم الإجابات
-        Route::post('/quizzes/{id}/submit', [quizController::class, 'submitQuiz']);
+    Route::post('/quizzes/{id}/submit', [quizController::class, 'submitQuiz']);
 
-    });
+    Route::get('/results', [quizController::class, 'allResults']);
 
+});
 
     /*
     |--------------------------------------------------------------------------
