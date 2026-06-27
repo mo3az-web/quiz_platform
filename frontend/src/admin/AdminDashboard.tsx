@@ -36,9 +36,12 @@ export default function AdminDashboard() {
           <div className="rounded-lg bg-gray-700 p-4">⚙️ System Status: Healthy</div>
         </div>
 
-        <button className="mt-6 rounded-lg bg-red-500 px-4 py-2 hover:bg-red-600">
+        <NavLink
+          to="/admin/manageusers"
+          className="mt-6 rounded-lg bg-red-500 px-4 py-2 hover:bg-red-600"
+        >
           Manage Users
-        </button>
+        </NavLink>
       </div>
     </div>
   );

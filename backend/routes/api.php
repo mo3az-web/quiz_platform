@@ -4,6 +4,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\quizController;
+use App\Http\Controllers\adminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +24,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Admin Routes (إدارة الكويز)
+    | Admin Routes (manage quizzes)
     |--------------------------------------------------------------------------
     */
  Route::prefix('admin')->middleware('auth:sanctum')->group(function () {
@@ -33,19 +34,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/quizzes/{id}', [quizController::class, 'show']);
     Route::put('/quizzes/{id}', [quizController::class, 'update']);
     Route::delete('/quizzes/{id}', [quizController::class, 'destroy']);
+      /*
+    |--------------------------------------------------------------------------
+    | Admin Routes (manage users)
+    |--------------------------------------------------------------------------
+    */
+    
+    Route::get('/users', [adminController::class, 'getUsers']);
+    Route::get('/users/{id}', [adminController::class, 'getUserMarks']);
+
 
 });
 
 
     /*
     |--------------------------------------------------------------------------
-    | Student Routes (حل الكويز)
+    | Student Routes (solve quizzes)
     |--------------------------------------------------------------------------
     */
    Route::prefix('student')->group(function () {
 
     Route::get('/quizzes', [quizController::class, 'studentIndex']);
-
     Route::get('/quizzes/{id}', [quizController::class, 'studentShow']);
 
     Route::post('/quizzes/{id}/start', [quizController::class, 'startQuiz']);

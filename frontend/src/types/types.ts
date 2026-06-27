@@ -68,3 +68,11 @@ export interface Exam {
   duration: number; // بالدقايق
   questions: Question[];
 }
+
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+}

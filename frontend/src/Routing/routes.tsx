@@ -9,6 +9,8 @@ import ViewExams from "../admin/viewExams";
 import ShowExams from "../user/showExams";
 import ExamPage from "../user/exam";
 import AllResults from "../user/GetResult";
+import UsersPage from "../admin/getUsers";
+import UserMarksPage from "../admin/userMarks";
 // check auth
 
 export default function AppRoutes() {
@@ -103,6 +105,22 @@ export default function AppRoutes() {
           element={<h1>Unauthorized ❌</h1>}
         />
 
+        <Route
+          path="/admin/manageusers"
+          element={
+            <RoleRoute allowedRoles={["admin"]}>
+              <UsersPage />
+            </RoleRoute>
+          }
+        />
+  <Route
+          path="/users/:id"
+          element={
+            <RoleRoute allowedRoles={["admin"]}>
+              <UserMarksPage />
+            </RoleRoute>
+          }
+        />
         {/* fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
 
