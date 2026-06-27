@@ -11,6 +11,7 @@ import type { Question } from '../types/types';
 type PageStatus = 'loading' | 'ready' | 'already_submitted' | 'error' | 'submitted';
 
 export default function ExamPage() {
+  
   const { examId } = useParams<{ examId: string }>();
 
   const [exam, setExam] = useState<Exam | null>(null);
@@ -112,32 +113,54 @@ export default function ExamPage() {
   }, [examId]);
 
   // ================= التسليم =================
-  const handleSubmit = useCallback(async () => {
-    if (!examId || submittedRef.current || !attemptId) return;
-    submittedRef.current = true;
-    setSubmitting(true);
+ const handleSubmit = useCallback(async () => {
+  if (!examId || submittedRef.current || !attemptId) return;
 
-    try {
-      const res = await api.post(`/student/quizzes/${examId}/submit`, {
-        attempt_id: attemptId,
-        answers: answersRef.current, // آخر نسخة من الإجابات، مش نسخة قديمة
-      });
+  // 🛑 منع الإرسال لو مفيش إجابات
+  if (Object.keys(answersRef.current).length === 0) {
+    alert("لازم تجاوب على الأقل سؤال واحد");
+    return;
+  }
 
-      setResult({
-        score: res.data.score,
-        total_points: res.data.total_points,
-      });
-      setStatus('submitted');
-    } catch (error: any) {
-      console.error('Submit Error:', error?.response?.data || error);
-      submittedRef.current = false; // سمحلّه يحاول تاني لو فشل التسليم لأي سبب
-      setErrorMsg(
-        error?.response?.data?.message || 'فشل تسليم الامتحان، حاول مرة أخرى'
-      );
-      setSubmitting(false);
-    }
-  }, [examId, attemptId]);
+  submittedRef.current = true;
+  setSubmitting(true);
 
+  try {
+    const formattedAnswers = Object.entries(answersRef.current).map(
+      ([question_id, choice_id]) => ({
+        question_id: Number(question_id),
+        choice_id: Number(choice_id), // 🔥 fix مهم
+      })
+    );
+
+    const payload = {
+      attempt_id: Number(attemptId), // 🔥 fix مهم
+      answers: formattedAnswers,
+    };
+
+    console.log("🚀 FINAL DATA:", payload); // 🔥 debug مهم
+
+    const res = await api.post(
+      `/student/quizzes/${examId}/submit`,
+      payload
+    );
+
+    setResult({
+      score: res.data.score,
+      total_points: res.data.total_points,
+    });
+
+    setStatus('submitted');
+  } catch (error: any) {
+    console.error("❌ ERROR FULL:", error?.response?.data || error);
+
+    submittedRef.current = false;
+    setErrorMsg(
+      error?.response?.data?.message || 'فشل تسليم الامتحان'
+    );
+    setSubmitting(false);
+  }
+}, [examId, attemptId]);
   // ================= المؤقّت =================
   useEffect(() => {
     if (status !== 'ready') return;
@@ -260,7 +283,7 @@ export default function ExamPage() {
   const question = exam.questions[currentQuestion];
   const progress = ((currentQuestion + 1) / exam.questions.length) * 100;
   const isLowTime = timeLeft <= 60;
-
+  
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
@@ -348,4 +371,5 @@ export default function ExamPage() {
       </div>
     </div>
   );
+
 }
