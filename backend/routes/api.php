@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\quizController;
 use App\Http\Controllers\adminController;
+use App\Notifications\NewExamNotification;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,7 +67,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/results', [quizController::class, 'allResults']);
 
 });
+ /*
+    |--------------------------------------------------------------------------
+    | Notifications Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/notifications/{id}/read', function ($id) {
+    $notification = auth()->user()
+        ->notifications()
+        ->where('id', $id)
+        ->first();
 
+    if ($notification) {
+        $notification->markAsRead();
+    }
+
+    return response()->json(['message' => 'done']);
+});
     /*
     |--------------------------------------------------------------------------
     | Logout

@@ -1,48 +1,146 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import {
+  Bell,
+  LogOut,
+  BookOpen,
+  BarChart3,
+} from "lucide-react";
 
 export default function UserDashboard() {
   const username = localStorage.getItem("username") || "User";
   const navigate = useNavigate();
 
-  const stats = [
-    { label: "Your Courses", value: "3", icon: "📊", color: "bg-blue-50 border-blue-200" },
-    { label: "Completed Tasks", value: "12", icon: "✅", color: "bg-green-50 border-green-200" },
-    { label: "Pending Tasks", value: "5", icon: "⏳", color: "bg-yellow-50 border-yellow-200" },
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const notifications = [
+    "امتحان جديد متاح الآن",
+    "تم إعلان نتيجتك",
+    "اختبار سينتهي قريبًا",
   ];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white p-8 rounded-2xl shadow-lg">
-          <h1 className="text-4xl font-bold text-blue-600 mb-2">
-            Welcome 👋 {username}
-          </h1>
-          <p className="text-gray-500 mb-8">
-            Track your learning progress and manage your courses
-          </p>
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {stats.map((stat, idx) => (
-              <div key={idx} className={`p-6 rounded-xl border-2 shadow-sm hover:shadow-md transition ${stat.color}`}>
-                <div className="text-3xl mb-2">{stat.icon}</div>
-                <p className="text-gray-600 text-sm">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+
+      {/* 🔵 Navbar */}
+      <div className="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center sticky top-0">
+
+        <h2 className="text-xl font-bold text-blue-600 flex items-center gap-2">
+          <BookOpen size={22} />
+          Exam Portal
+        </h2>
+
+        <div className="flex items-center gap-5">
+
+          <span className="text-sm text-gray-600 hidden md:block">
+            👋 {username}
+          </span>
+
+          {/* 🔔 Notifications */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative hover:scale-110 transition"
+            >
+              <Bell size={22} />
+
+              {/* Badge */}
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
+                {notifications.length}
+              </span>
+            </button>
+
+            {showNotifications && (
+              <div className="absolute right-0 mt-3 w-80 bg-white shadow-xl rounded-xl border">
+                <div className="p-4 border-b font-semibold text-gray-700">
+                  الإشعارات
+                </div>
+
+                {notifications.map((note, idx) => (
+                  <div
+                    key={idx}
+                    className="p-3 text-sm hover:bg-gray-50 border-b cursor-pointer"
+                  >
+                    {note}
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
 
+          {/* 🔴 Logout */}
           <button
-            onClick={() => navigate("/exams")}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200"
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow transition"
           >
-          بوابة الاختبار 
+            <LogOut size={16} />
+            تسجيل الخروج
           </button>
-            <button
-            onClick={() => navigate("/results")}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-200"
-          >
-           الاطلا علي النتائج
-          </button>
+        </div>
+      </div>
+
+      {/* 🔵 Main */}
+      <div className="p-6">
+        <div className="max-w-5xl mx-auto">
+
+          {/* Hero */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-10 rounded-3xl shadow-xl mb-10">
+            <h1 className="text-3xl font-bold mb-2">
+              أهلاً 👋 {username}
+            </h1>
+            <p className="opacity-90">
+              جاهز تبدأ امتحانك؟ 🚀
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="grid md:grid-cols-2 gap-8">
+
+            {/* Start Exam */}
+            <div
+              onClick={() => navigate("/exams")}
+              className="group bg-white p-8 rounded-2xl shadow-md hover:shadow-xl cursor-pointer transition hover:-translate-y-2 border"
+            >
+              <BookOpen
+                size={40}
+                className="mb-4 text-blue-600 group-hover:scale-110 transition"
+              />
+
+              <h2 className="text-xl font-bold text-gray-800 mb-2">
+                بدء الاختبار
+              </h2>
+
+              <p className="text-gray-500 text-sm">
+                ادخل على الامتحانات المتاحة وابدأ فورًا
+              </p>
+            </div>
+
+            {/* Results */}
+            <div
+              onClick={() => navigate("/results")}
+              className="group bg-white p-8 rounded-2xl shadow-md hover:shadow-xl cursor-pointer transition hover:-translate-y-2 border"
+            >
+              <BarChart3
+                size={40}
+                className="mb-4 text-green-600 group-hover:scale-110 transition"
+              />
+
+              <h2 className="text-xl font-bold text-gray-800 mb-2">
+                النتائج
+              </h2>
+
+              <p className="text-gray-500 text-sm">
+                تابع درجاتك في الاختبارات السابقة
+              </p>
+            </div>
+
+          </div>
+
         </div>
       </div>
     </div>

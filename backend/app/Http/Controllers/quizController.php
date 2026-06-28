@@ -428,7 +428,7 @@ public function allResults()
             'percentage' => $attempt->total_points > 0
                 ? round(($attempt->score / $attempt->total_points) * 100)
                 : 0,
-            'date' => $attempt->completed_at,
+            'date' => $attempt->created_at,
             'status' => ($attempt->total_points > 0 && ($attempt->score / $attempt->total_points) >= 0.5)
                 ? 'passed'
                 : 'failed',

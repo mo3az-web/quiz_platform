@@ -1,47 +1,77 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  FilePlus,
+  ClipboardList,
+  Users,
+  LogOut,
+} from "lucide-react";
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const adminName = localStorage.getItem("username") || "Admin";
 
-  return (
-    <div className="min-h-screen bg-gray-900 p-6 text-white">
-      <div className="rounded-2xl bg-gray-800 p-6 shadow-lg">
-        <h1 className="text-3xl font-bold text-red-400">
-          Admin Panel 🔥 {adminName}
-        </h1>
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
-        <p className="mt-2 text-gray-300">
-          Manage users, courses, and system settings.
+  return (
+    <div className="min-h-screen bg-gray-950 p-6 text-white">
+      <div className="mx-auto max-w-5xl rounded-2xl bg-gray-900 p-6 shadow-xl border border-gray-800">
+
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+          <div className="flex items-center gap-3">
+            <LayoutDashboard className="text-red-500" size={28} />
+            <h1 className="text-2xl font-bold">
+              Admin Dashboard
+            </h1>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm hover:bg-red-700 transition"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
+        </div>
+
+        {/* Welcome */}
+        <p className="mt-4 text-gray-400">
+          Welcome back, <span className="text-white font-semibold">{adminName}</span>
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        {/* Actions */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+
           <NavLink
             to="/admin/addexam"
-            className="inline-block rounded-lg bg-blue-500 px-4 py-2 transition-colors hover:bg-blue-600"
+            className="flex items-center gap-3 rounded-xl bg-blue-600 p-4 hover:bg-blue-700 transition shadow"
           >
-            Add Exam
+            <FilePlus size={22} />
+            <span className="font-medium">Add Exam</span>
           </NavLink>
 
           <NavLink
             to="/admin/viewexams"
-            className="inline-block rounded-lg bg-green-600 px-4 py-2 transition-colors hover:bg-green-700"
+            className="flex items-center gap-3 rounded-xl bg-green-600 p-4 hover:bg-green-700 transition shadow"
           >
-            View Exams
+            <ClipboardList size={22} />
+            <span className="font-medium">View Exams</span>
           </NavLink>
+
+          <NavLink
+            to="/admin/manageusers"
+            className="flex items-center gap-3 rounded-xl bg-purple-600 p-4 hover:bg-purple-700 transition shadow sm:col-span-2"
+          >
+            <Users size={22} />
+            <span className="font-medium">Manage Users</span>
+          </NavLink>
+
         </div>
 
-        <div className="mt-6 grid gap-4">
-          <div className="rounded-lg bg-gray-700 p-4">👥 Total Users: 120</div>
-          <div className="rounded-lg bg-gray-700 p-4">📚 Total Courses: 25</div>
-          <div className="rounded-lg bg-gray-700 p-4">⚙️ System Status: Healthy</div>
-        </div>
-
-        <NavLink
-          to="/admin/manageusers"
-          className="mt-6 rounded-lg bg-red-500 px-4 py-2 hover:bg-red-600"
-        >
-          Manage Users
-        </NavLink>
       </div>
     </div>
   );
