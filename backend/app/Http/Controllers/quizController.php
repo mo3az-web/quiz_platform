@@ -362,19 +362,44 @@ private function rules(bool $creating = true): array
         ], 404);
     }
 
-    $score = 0;
-    $totalPoints = 0;
+   $score = 0;
+$totalPoints = 0;
 
-  
-    DB::table('quiz_attempts')
-        ->where("id", $attempt->id)
-        ->update([
-            "answers" => json_encode($data["answers"]),
-            "score" => $score,
-            "total_points" => $totalPoints,
-            "status" => "completed",
-            "updated_at" => now(),
-        ]);
+// 🔥 حساب النقاط بناءً على الإجابات الصحيحة
+foreach ($quiz->questions as $question) {
+    $totalPoints += $question->points ?? 1;
+
+    // ابحث عن إجابة الطالب على هذا السؤال
+    $studentAnswer = collect($data["answers"])->firstWhere(
+        "question_id", 
+        $question->id
+    );
+
+    if (!$studentAnswer) {
+        continue; // الطالب ما أجاب على السؤال
+    }
+
+    // تحقق إذا الاختيار الي اختاره الطالب صحيح
+    $correctChoice = $question->choices()
+        ->where("id", $studentAnswer["choice_id"])
+        ->where("is_correct", true)
+        ->first();
+
+    if ($correctChoice) {
+        $score += $question->points ?? 1;
+    }
+}
+
+// الآن update قاعدة البيانات
+DB::table('quiz_attempts')
+    ->where("id", $attempt->id)
+    ->update([
+        "answers" => json_encode($data["answers"]),
+        "score" => $score,
+        "total_points" => $totalPoints,
+        "status" => "completed",
+        "updated_at" => now(),
+    ]);
 
     return response()->json([
         "message" => "Quiz submitted successfully",
