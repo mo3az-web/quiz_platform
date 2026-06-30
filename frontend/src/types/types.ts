@@ -76,3 +76,13 @@ export interface User {
   email: string;
   role: string;
 }
+
+ export interface Result {
+  id: number;
+  title: string;
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  date: string;
+  status: "passed" | "failed";
+}

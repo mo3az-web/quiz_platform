@@ -7,17 +7,7 @@ import {
   BarChart3,
   Loader2,
 } from "lucide-react";
-
-interface Result {
-  id: number;
-  title: string;
-  score: number;
-  totalQuestions: number;
-  percentage: number;
-  date: string;
-  status: "passed" | "failed";
-}
-
+import type { Result } from "../types/types";
 const AllResults: React.FC = () => {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);

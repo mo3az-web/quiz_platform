@@ -91,11 +91,9 @@ export default function UserDashboard() {
           {/* Hero */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-10 rounded-3xl shadow-xl mb-10">
             <h1 className="text-3xl font-bold mb-2">
-              أهلاً 👋 {username}
+              {username}
             </h1>
-            <p className="opacity-90">
-              جاهز تبدأ امتحانك؟ 🚀
-            </p>
+         
           </div>
 
           {/* Actions */}
