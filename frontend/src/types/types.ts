@@ -65,10 +65,18 @@ export interface Exam {
   id: number;
   title: string;
   description: string;
-  duration: number; // بالدقايق
+  duration: number; 
   questions: Question[];
 }
-
+export interface ExamView {
+  id: number;
+  title: string;
+  description: string;
+  duration: number;
+  totalQuestions: number;
+  passingScore: number;
+  status: "active";
+}
 
 export interface User {
   id: number;

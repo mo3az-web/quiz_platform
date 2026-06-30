@@ -9,19 +9,11 @@ import {
   FileText,
 } from "lucide-react";
 
-interface Exam {
-  id: number;
-  title: string;
-  description: string;
-  duration: number;
-  totalQuestions: number;
-  passingScore: number;
-  status: "active";
-}
+import  type { ExamView } from "../types/types";
 
 const ShowExams: React.FC = () => {
   const username = localStorage.getItem("username") || "User";
-  const [exams, setExams] = useState<Exam[]>([]);
+  const [exams, setExams] = useState<ExamView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -44,7 +36,7 @@ const ShowExams: React.FC = () => {
         (q: any) => !q.is_completed && (q.available ?? true)
       );
 
-      const formatted: Exam[] = available.map((q: any) => ({
+      const formatted: ExamView[] = available.map((q: any) => ({
         id: q.id,
         title: q.title || "Untitled Exam",
         description: q.description || "No description",
